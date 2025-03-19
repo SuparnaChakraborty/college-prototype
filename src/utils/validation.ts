@@ -1,350 +1,337 @@
 
-import { Lecturer, Room, Course, StudentRequest, MatchResult } from './types';
+import { 
+  Lecturer, 
+  Room, 
+  Course, 
+  StudentRequest, 
+  ValidationResult, 
+  ValidationError,
+  DatasetAnalysis,
+  DataStatistics
+} from './types';
 
 /**
- * Validates if a lecturer has valid periods
+ * Validates the entire dataset for consistency and completeness
  */
-export function validateLecturer(lecturer: Lecturer): string[] {
-  const errors: string[] = [];
+export function validateDataset(
+  lecturers: Lecturer[],
+  rooms: Room[],
+  courses: Course[],
+  requests: StudentRequest[]
+): ValidationResult {
+  const errors: ValidationError[] = [];
+  const warnings: ValidationError[] = [];
   
-  if (!lecturer.id) errors.push(`Lecturer is missing ID`);
-  if (!lecturer.name) errors.push(`Lecturer ${lecturer.id} is missing name`);
-  if (lecturer.maxCoursesPerPeriod <= 0) errors.push(`Lecturer ${lecturer.name} (${lecturer.id}) has invalid maxCoursesPerPeriod`);
-  if (!lecturer.availablePeriods || lecturer.availablePeriods.length === 0) {
-    errors.push(`Lecturer ${lecturer.name} (${lecturer.id}) has no available periods`);
+  // Check for lecturers
+  if (lecturers.length === 0) {
+    errors.push({
+      type: 'system',
+      id: 'no-lecturers',
+      message: 'No lecturers defined in the dataset.',
+      severity: 'error'
+    });
   }
   
-  return errors;
-}
-
-/**
- * Validates if a room has valid capacity and periods
- */
-export function validateRoom(room: Room): string[] {
-  const errors: string[] = [];
-  
-  if (!room.id) errors.push(`Room is missing ID`);
-  if (!room.name) errors.push(`Room ${room.id} is missing name`);
-  if (room.capacity <= 0) errors.push(`Room ${room.name} (${room.id}) has invalid capacity`);
-  if (!room.availablePeriods || room.availablePeriods.length === 0) {
-    errors.push(`Room ${room.name} (${room.id}) has no available periods`);
+  // Check for rooms
+  if (rooms.length === 0) {
+    errors.push({
+      type: 'system',
+      id: 'no-rooms',
+      message: 'No rooms defined in the dataset.',
+      severity: 'error'
+    });
   }
   
-  return errors;
-}
-
-/**
- * Validates if a course has a valid lecturer and room capacity requirement
- */
-export function validateCourse(course: Course, lecturers: Lecturer[]): string[] {
-  const errors: string[] = [];
+  // Check for courses
+  if (courses.length === 0) {
+    errors.push({
+      type: 'system',
+      id: 'no-courses',
+      message: 'No courses defined in the dataset.',
+      severity: 'error'
+    });
+  }
   
-  if (!course.id) errors.push(`Course is missing ID`);
-  if (!course.code) errors.push(`Course ${course.id} is missing code`);
-  if (!course.name) errors.push(`Course ${course.code} (${course.id}) is missing name`);
+  // Check for requests
+  if (requests.length === 0) {
+    errors.push({
+      type: 'system',
+      id: 'no-requests',
+      message: 'No student requests defined in the dataset.',
+      severity: 'error'
+    });
+  }
   
-  if (!course.lecturerId) {
-    errors.push(`Course ${course.name} (${course.id}) is missing lecturerId`);
-  } else {
+  // Course validation: check lecturer exists
+  courses.forEach(course => {
     const lecturer = lecturers.find(l => l.id === course.lecturerId);
     if (!lecturer) {
-      errors.push(`Course ${course.name} (${course.id}) has invalid lecturerId: ${course.lecturerId}`);
+      errors.push({
+        type: 'course',
+        id: course.id,
+        message: `Course ${course.code} (${course.name}) references non-existent lecturer ID: ${course.lecturerId}.`,
+        severity: 'error'
+      });
     }
-  }
+  });
   
-  if (course.requiredRoomCapacity <= 0) {
-    errors.push(`Course ${course.name} (${course.id}) has invalid requiredRoomCapacity`);
-  }
+  // Room capacity vs course requirements
+  courses.forEach(course => {
+    const suitableRooms = rooms.filter(room => room.capacity >= course.requiredRoomCapacity);
+    if (suitableRooms.length === 0) {
+      errors.push({
+        type: 'course',
+        id: course.id,
+        message: `Course ${course.code} requires room capacity of ${course.requiredRoomCapacity}, but no suitable rooms exist.`,
+        severity: 'error'
+      });
+    }
+  });
   
-  return errors;
-}
-
-/**
- * Validates if a student request has valid course choices
- */
-export function validateStudentRequest(request: StudentRequest, courses: Course[]): string[] {
-  const errors: string[] = [];
-  
-  if (!request.id) errors.push(`Student request is missing ID`);
-  if (!request.studentId) errors.push(`Request ${request.id} is missing studentId`);
-  if (!request.studentName) errors.push(`Request ${request.id} is missing studentName`);
-  if (!request.period) errors.push(`Request for ${request.studentName} (${request.id}) is missing period`);
-  
-  if (!request.courseChoices || request.courseChoices.length === 0) {
-    errors.push(`Request for ${request.studentName} (${request.id}) has no course choices`);
-  } else {
+  // Student requests validation
+  requests.forEach(request => {
+    // Check if referenced courses exist
     request.courseChoices.forEach(courseId => {
       const course = courses.find(c => c.id === courseId);
       if (!course) {
-        errors.push(`Request for ${request.studentName} has invalid course choice: ${courseId}`);
+        errors.push({
+          type: 'request',
+          id: request.id,
+          message: `Student request for ${request.studentName} references non-existent course ID: ${courseId}.`,
+          severity: 'error'
+        });
       }
     });
-  }
-  
-  return errors;
-}
-
-/**
- * Validates the entire dataset for consistency
- */
-export function validateDataset(
-  lecturers: Lecturer[], 
-  rooms: Room[], 
-  courses: Course[], 
-  requests: StudentRequest[]
-): { valid: boolean; errors: string[] } {
-  let errors: string[] = [];
-  
-  // Validate individual entities
-  lecturers.forEach(lecturer => {
-    errors = [...errors, ...validateLecturer(lecturer)];
-  });
-  
-  rooms.forEach(room => {
-    errors = [...errors, ...validateRoom(room)];
-  });
-  
-  courses.forEach(course => {
-    errors = [...errors, ...validateCourse(course, lecturers)];
-  });
-  
-  requests.forEach(request => {
-    errors = [...errors, ...validateStudentRequest(request, courses)];
-  });
-  
-  // Validate matching rules
-  const periods = new Set<string>();
-  requests.forEach(request => periods.add(request.period));
-  
-  periods.forEach(period => {
-    const periodRequests = requests.filter(r => r.period === period);
-    const requestedCourseIds = new Set<string>();
     
-    periodRequests.forEach(request => {
-      request.courseChoices.forEach(courseId => {
-        requestedCourseIds.add(courseId);
+    // Check if student has enough choices
+    if (request.courseChoices.length === 0) {
+      errors.push({
+        type: 'request',
+        id: request.id,
+        message: `Student ${request.studentName} has no course choices for period ${request.period}.`,
+        severity: 'error'
       });
-    });
+    } else if (request.courseChoices.length < 3) {
+      warnings.push({
+        type: 'request',
+        id: request.id,
+        message: `Student ${request.studentName} has fewer than 3 course choices (${request.courseChoices.length}) for period ${request.period}.`,
+        severity: 'warning'
+      });
+    }
     
-    // Check if courses can be offered in this period
-    requestedCourseIds.forEach(courseId => {
-      const course = courses.find(c => c.id === courseId);
-      if (course) {
-        const lecturer = lecturers.find(l => l.id === course.lecturerId);
-        if (lecturer && !lecturer.availablePeriods.includes(period)) {
-          errors.push(`Course ${course.name} (${course.id}) is requested in period ${period}, but lecturer ${lecturer.name} is not available`);
-        }
-        
-        // Check if there are suitable rooms
-        const suitableRooms = rooms.filter(
-          room => room.capacity >= course.requiredRoomCapacity && 
-                  room.availablePeriods.includes(period)
+    // Check for duplicate choices
+    const uniqueChoices = new Set(request.courseChoices);
+    if (uniqueChoices.size !== request.courseChoices.length) {
+      warnings.push({
+        type: 'request',
+        id: request.id,
+        message: `Student ${request.studentName} has duplicate course choices for period ${request.period}.`,
+        severity: 'warning'
+      });
+    }
+  });
+  
+  // Check for lecturer availability in periods
+  const allPeriods = new Set<string>();
+  requests.forEach(request => allPeriods.add(request.period));
+  
+  lecturers.forEach(lecturer => {
+    allPeriods.forEach(period => {
+      if (!lecturer.availablePeriods.includes(period)) {
+        const lecturerCourses = courses.filter(c => c.lecturerId === lecturer.id);
+        // Only warn if this lecturer teaches courses that students have requested
+        const hasRequestedCourses = requests.some(r => 
+          r.period === period && 
+          r.courseChoices.some(courseId => 
+            lecturerCourses.some(c => c.id === courseId)
+          )
         );
         
-        if (suitableRooms.length === 0) {
-          errors.push(`Course ${course.name} (${course.id}) requires capacity ${course.requiredRoomCapacity} in period ${period}, but no suitable rooms are available`);
+        if (hasRequestedCourses) {
+          warnings.push({
+            type: 'lecturer',
+            id: lecturer.id,
+            message: `Lecturer ${lecturer.name} is not available in period ${period}, but teaches courses requested during this period.`,
+            severity: 'warning'
+          });
         }
+      }
+    });
+  });
+  
+  // Check for room availability in periods
+  rooms.forEach(room => {
+    allPeriods.forEach(period => {
+      if (!room.availablePeriods.includes(period)) {
+        warnings.push({
+          type: 'room',
+          id: room.id,
+          message: `Room ${room.name} is not available in period ${period}.`,
+          severity: 'warning'
+        });
       }
     });
   });
   
   return {
     valid: errors.length === 0,
-    errors
+    errors,
+    warnings
   };
 }
 
 /**
- * Analyzes the dataset and provides insights
+ * Analyzes the dataset to provide insights and statistics
  */
 export function analyzeDataset(
   lecturers: Lecturer[],
   rooms: Room[],
   courses: Course[],
   requests: StudentRequest[]
-): { insights: string[]; statistics: Record<string, any> } {
-  const insights: string[] = [];
-  const statistics: Record<string, any> = {};
+): DatasetAnalysis {
+  // Collect all unique periods
+  const periodsInUse = Array.from(new Set(requests.map(r => r.period))).sort();
+  
+  // Count requests per period
+  const requestsPerPeriod: Record<string, number> = {};
+  periodsInUse.forEach(period => {
+    requestsPerPeriod[period] = requests.filter(r => r.period === period).length;
+  });
   
   // Count courses per lecturer
   const coursesPerLecturer: Record<string, number> = {};
+  lecturers.forEach(lecturer => {
+    coursesPerLecturer[lecturer.id] = courses.filter(c => c.lecturerId === lecturer.id).length;
+  });
+  
+  // Count requests per course
+  const requestsPerCourse: Record<string, number> = {};
   courses.forEach(course => {
-    if (!coursesPerLecturer[course.lecturerId]) {
-      coursesPerLecturer[course.lecturerId] = 0;
-    }
-    coursesPerLecturer[course.lecturerId]++;
+    requestsPerCourse[course.id] = requests.filter(r => 
+      r.courseChoices.includes(course.id)
+    ).length;
   });
   
-  // Identify overloaded lecturers
-  const overloadedLecturers = lecturers.filter(
-    lecturer => (coursesPerLecturer[lecturer.id] || 0) > lecturer.maxCoursesPerPeriod
-  );
-  
-  if (overloadedLecturers.length > 0) {
-    insights.push(`${overloadedLecturers.length} lecturers are potentially overloaded if all their courses are scheduled in the same period.`);
-  }
-  
-  // Analyze room utilization
-  const largeRooms = rooms.filter(room => room.capacity >= 100);
-  const smallRooms = rooms.filter(room => room.capacity < 30);
-  
-  if (largeRooms.length === 0 && courses.some(course => course.requiredRoomCapacity >= 100)) {
-    insights.push("There are courses requiring large rooms (100+ capacity) but no such rooms exist.");
-  }
-  
-  // Analyze requests
-  const requestsByPeriod: Record<string, number> = {};
-  requests.forEach(request => {
-    if (!requestsByPeriod[request.period]) {
-      requestsByPeriod[request.period] = 0;
-    }
-    requestsByPeriod[request.period]++;
+  // Calculate potential room utilization
+  const roomUtilization: Record<string, number> = {};
+  rooms.forEach(room => {
+    const suitableCourses = courses.filter(c => c.requiredRoomCapacity <= room.capacity);
+    roomUtilization[room.id] = suitableCourses.length;
   });
   
-  const periods = Object.keys(requestsByPeriod);
-  const maxRequestsPeriod = periods.reduce((a, b) => 
-    requestsByPeriod[a] > requestsByPeriod[b] ? a : b, periods[0]);
-    
-  insights.push(`Period ${maxRequestsPeriod} has the highest number of requests: ${requestsByPeriod[maxRequestsPeriod]}`);
+  // Get unique student count
+  const uniqueStudentIds = new Set(requests.map(r => r.studentId));
   
-  // Check for course popularity
-  const coursePopularity: Record<string, number> = {};
-  requests.forEach(request => {
-    request.courseChoices.forEach((courseId, index) => {
-      if (!coursePopularity[courseId]) {
-        coursePopularity[courseId] = 0;
-      }
-      // Weight by preference (first choice gets 3 points, second gets 2, third gets 1)
-      coursePopularity[courseId] += (3 - index);
-    });
-  });
+  // Generate insights
+  const insights: string[] = [];
   
-  const sortedCourses = Object.entries(coursePopularity)
-    .sort(([, a], [, b]) => b - a)
+  // Insight: Course popularity
+  const popularCourses = Object.entries(requestsPerCourse)
+    .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([id]) => courses.find(c => c.id === id)?.name || id);
-  
-  insights.push(`Most popular courses (weighted by preference): ${sortedCourses.join(', ')}`);
-  
-  // Compile statistics
-  statistics.totalLecturers = lecturers.length;
-  statistics.totalRooms = rooms.length;
-  statistics.totalCourses = courses.length;
-  statistics.totalRequests = requests.length;
-  statistics.periodDistribution = requestsByPeriod;
-  statistics.averageCoursesPerLecturer = 
-    Object.values(coursesPerLecturer).reduce((sum, count) => sum + count, 0) / lecturers.length;
-  
-  return { insights, statistics };
-}
-
-/**
- * Checks if the matching results satisfy constraints
- */
-export function validateMatchResults(
-  results: MatchResult[],
-  lecturers: Lecturer[],
-  rooms: Room[],
-  courses: Course[]
-): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  // Group by period
-  const resultsByPeriod: Record<string, MatchResult[]> = {};
-  results.forEach(result => {
-    if (!resultsByPeriod[result.period]) {
-      resultsByPeriod[result.period] = [];
-    }
-    resultsByPeriod[result.period].push(result);
-  });
-  
-  // Check each period
-  Object.entries(resultsByPeriod).forEach(([period, periodResults]) => {
-    // Count courses per lecturer
-    const lecturerCourseCount: Record<string, number> = {};
-    
-    // Track course enrollments
-    const courseEnrollments: Record<string, number> = {};
-    
-    periodResults.forEach(result => {
-      if (result.assignedCourseId) {
-        // Count course enrollment
-        if (!courseEnrollments[result.assignedCourseId]) {
-          courseEnrollments[result.assignedCourseId] = 0;
-        }
-        courseEnrollments[result.assignedCourseId]++;
-        
-        // Update lecturer count
-        const course = courses.find(c => c.id === result.assignedCourseId);
-        if (course) {
-          if (!lecturerCourseCount[course.lecturerId]) {
-            lecturerCourseCount[course.lecturerId] = 0;
-          }
-          lecturerCourseCount[course.lecturerId]++;
-        }
-      }
-    });
-    
-    // Check lecturer constraints
-    Object.entries(lecturerCourseCount).forEach(([lecturerId, count]) => {
-      const lecturer = lecturers.find(l => l.id === lecturerId);
-      if (lecturer) {
-        if (!lecturer.availablePeriods.includes(period)) {
-          errors.push(`Lecturer ${lecturer.name} is assigned to teach in period ${period} but is not available`);
-        }
-        
-        if (count > lecturer.maxCoursesPerPeriod) {
-          errors.push(`Lecturer ${lecturer.name} is assigned ${count} courses in period ${period}, exceeding limit of ${lecturer.maxCoursesPerPeriod}`);
-        }
-      }
-    });
-    
-    // Check room capacity constraints
-    Object.entries(courseEnrollments).forEach(([courseId, enrollment]) => {
+    .map(([courseId, count]) => {
       const course = courses.find(c => c.id === courseId);
-      if (course) {
-        // Check if there's a room that can accommodate this course
-        const suitableRooms = rooms.filter(
-          room => room.capacity >= course.requiredRoomCapacity && 
-                  room.availablePeriods.includes(period)
-        );
-        
-        if (suitableRooms.length === 0) {
-          errors.push(`Course ${course.name} is scheduled in period ${period} but no suitable room exists`);
-        }
+      return { id: courseId, name: course?.name, code: course?.code, count };
+    });
+  
+  if (popularCourses.length > 0) {
+    insights.push(`Most popular courses: ${popularCourses.map(c => `${c.code} (${c.count} requests)`).join(', ')}.`);
+  }
+  
+  // Insight: Periods with highest demand
+  const busyPeriods = Object.entries(requestsPerPeriod)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([period, count]) => ({ period, count }));
+  
+  if (busyPeriods.length > 0) {
+    insights.push(`Highest demand periods: ${busyPeriods.map(p => `${p.period} (${p.count} requests)`).join(', ')}.`);
+  }
+  
+  // Insight: Lecturers with most courses
+  const busyLecturers = Object.entries(coursesPerLecturer)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([lecturerId, count]) => {
+      const lecturer = lecturers.find(l => l.id === lecturerId);
+      return { id: lecturerId, name: lecturer?.name, count };
+    });
+  
+  if (busyLecturers.length > 0) {
+    insights.push(`Lecturers with most courses: ${busyLecturers.map(l => `${l.name} (${l.count} courses)`).join(', ')}.`);
+  }
+  
+  // Insight: Room utilization
+  const underutilizedRooms = Object.entries(roomUtilization)
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 2)
+    .map(([roomId, count]) => {
+      const room = rooms.find(r => r.id === roomId);
+      return { id: roomId, name: room?.name, capacity: room?.capacity, count };
+    });
+  
+  if (underutilizedRooms.some(r => r.count === 0)) {
+    insights.push(`Some rooms have no suitable courses: ${underutilizedRooms.filter(r => r.count === 0).map(r => r.name).join(', ')}.`);
+  }
+  
+  // Check potential scheduling conflicts
+  const potentialConflicts: Record<string, number> = {};
+  periodsInUse.forEach(period => {
+    const periodRequests = requests.filter(r => r.period === period);
+    const availableLecturers = lecturers.filter(l => l.availablePeriods.includes(period));
+    
+    const requestedCourseIds = new Set<string>();
+    periodRequests.forEach(r => r.courseChoices.forEach(c => requestedCourseIds.add(c)));
+    
+    const requestedCourses = courses.filter(c => requestedCourseIds.has(c.id));
+    const requiredLecturerIds = new Set(requestedCourses.map(c => c.lecturerId));
+    
+    const availableLecturerIds = new Set(availableLecturers.map(l => l.id));
+    
+    // Check if all required lecturers are available
+    let missingLecturers = 0;
+    requiredLecturerIds.forEach(id => {
+      if (!availableLecturerIds.has(id)) {
+        missingLecturers++;
       }
     });
+    
+    if (missingLecturers > 0) {
+      potentialConflicts[period] = missingLecturers;
+    }
   });
+  
+  if (Object.keys(potentialConflicts).length > 0) {
+    insights.push(`Potential scheduling conflicts in periods: ${Object.entries(potentialConflicts)
+      .map(([period, count]) => `${period} (${count} missing lecturers)`)
+      .join(', ')}.`);
+  }
+  
+  // Recommendations based on analysis
+  if (requests.some(r => r.courseChoices.length < 3)) {
+    insights.push("Recommendation: Encourage students to provide at least 3 course preferences to increase matching flexibility.");
+  }
+  
+  const statistics: DataStatistics = {
+    totalStudents: uniqueStudentIds.size,
+    totalRequests: requests.length,
+    totalCourses: courses.length,
+    totalLecturers: lecturers.length,
+    totalRooms: rooms.length,
+    periodsInUse,
+    requestsPerPeriod,
+    coursesPerLecturer,
+    requestsPerCourse,
+    roomUtilization
+  };
+  
+  // Get validation results
+  const validation = validateDataset(lecturers, rooms, courses, requests);
   
   return {
-    valid: errors.length === 0,
-    errors
+    insights,
+    statistics,
+    validation
   };
-}
-
-/**
- * Converts raw data from spreadsheet into structured objects
- * This function would need to be customized based on your Excel structure
- */
-export function convertRawData(rawData: any[]): {
-  lecturers: Lecturer[];
-  rooms: Room[];
-  courses: Course[];
-  requests: StudentRequest[];
-} {
-  // This is a placeholder for the actual conversion logic
-  // You would need to adapt this based on your Excel structure
-  
-  const lecturers: Lecturer[] = [];
-  const rooms: Room[] = [];
-  const courses: Course[] = [];
-  const requests: StudentRequest[] = [];
-  
-  // Example conversion (you'll need to customize this)
-  rawData.forEach(row => {
-    // Logic to extract and transform data from Excel rows
-    // ...
-  });
-  
-  return { lecturers, rooms, courses, requests };
 }

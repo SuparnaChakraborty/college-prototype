@@ -1,124 +1,190 @@
-
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Users, Calendar, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import { cn } from '@/lib/utils';
+import { ArrowRight, BookOpen, Users, Calendar, CheckCircle2, FileJson } from 'lucide-react';
 
 const Index = () => {
-  const navigate = useNavigate();
-  
-  const features = [
-    {
-      title: 'Course Catalog',
-      description: 'Browse all available courses with detailed information about lecturers and capacity requirements.',
-      icon: BookOpen,
-      color: 'bg-blue-50 text-blue-600',
-      path: '/courses'
-    },
-    {
-      title: 'Student Requests',
-      description: 'View and manage student course preferences and scheduling requests.',
-      icon: Users,
-      color: 'bg-purple-50 text-purple-600',
-      path: '/requests'
-    },
-    {
-      title: 'Matching Algorithm',
-      description: 'Visualize how our advanced matching algorithm optimizes student satisfaction and resource allocation.',
-      icon: PieChart,
-      color: 'bg-green-50 text-green-600',
-      path: '/matcher'
-    },
-  ];
-  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      <Hero
-        title={
-          <span>
-            <span className="text-primary">Course</span>
-            <span>Matcher</span>
-          </span>
-        }
-        subtitle="Optimizing course assignments for students and faculty with an intelligent matching algorithm."
-      />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-        {/* Features section */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-8 grid gap-8 md:grid-cols-3"
-        >
-          {features.map((feature, index) => (
+      <main>
+        {/* Hero Section */}
+        <section className="py-20 px-6 md:px-10 lg:px-20 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <motion.div
-              key={feature.title}
-              className="relative p-6 rounded-xl border bg-card shadow-sm overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 + (index * 0.1) }}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              transition={{ duration: 0.5 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-70" />
-              
-              <div className="relative">
-                <div className={cn("p-2 w-12 h-12 rounded-lg flex items-center justify-center mb-4", feature.color)}>
-                  <feature.icon className="w-6 h-6" />
-                </div>
-                
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground mb-4">{feature.description}</p>
-                
-                <Button 
-                  variant="outline" 
-                  className="mt-auto group"
-                  onClick={() => navigate(feature.path)}
-                >
-                  Explore
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+                Course Matching <span className="text-primary">Made Simple</span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                Efficiently match students to courses based on preferences, room availability, and lecturer constraints. Optimize your academic scheduling with our powerful matching algorithm.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button asChild size="lg">
+                  <Link to="/matcher">
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button variant="outline" size="lg" asChild>
+                  <Link to="/data-validation">
+                    <FileJson className="mr-2 h-5 w-5" />
+                    Validate Data
+                  </Link>
                 </Button>
               </div>
             </motion.div>
-          ))}
-        </motion.div>
-        
-        {/* Testimonial/Stat section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-16 glass rounded-xl p-8 md:p-10 relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
-          
-          <div className="relative z-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Optimizing Educational Resources</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-4xl font-bold text-primary">95%</p>
-                <p className="mt-2 text-muted-foreground">Student Preferences Satisfied</p>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-primary/5 border border-primary/10 rounded-xl p-6 shadow-sm"
+            >
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-background rounded-lg p-4 border">
+                  <h3 className="font-medium mb-2">Course Matching Process</h3>
+                  <ol className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start">
+                      <span className="bg-primary/10 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">1</span>
+                      <span>Import student preferences and course data</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-primary/10 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">2</span>
+                      <span>Validate data for consistency and completeness</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-primary/10 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">3</span>
+                      <span>Run the matching algorithm with constraints</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-primary/10 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">4</span>
+                      <span>Review results and optimize if needed</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-primary/10 text-primary rounded-full w-5 h-5 flex items-center justify-center text-xs mr-2 mt-0.5">5</span>
+                      <span>Export final assignments for implementation</span>
+                    </li>
+                  </ol>
+                </div>
+                
+                <div className="bg-background rounded-lg p-4 border">
+                  <h3 className="font-medium mb-2">Current Dataset</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>8 Students</span>
+                    </div>
+                    <div className="flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>8 Courses</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>6 Periods</span>
+                    </div>
+                    <div className="flex items-center">
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                      <span>Ready to Match</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-4xl font-bold text-primary">100%</p>
-                <p className="mt-2 text-muted-foreground">Faculty Resource Optimization</p>
-              </div>
-              <div>
-                <p className="text-4xl font-bold text-primary">30%</p>
-                <p className="mt-2 text-muted-foreground">Less Administrative Time</p>
-              </div>
+            </motion.div>
+          </div>
+        </section>
+        
+        {/* Features Section */}
+        <section className="py-16 bg-muted/30">
+          <div className="px-6 md:px-10 lg:px-20 max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl font-bold mb-4">Key Features</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Our course matching system provides powerful tools to optimize academic scheduling
+                while respecting constraints and maximizing student satisfaction.
+              </p>
+            </motion.div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 * index }}
+                  className="bg-background border rounded-xl p-6 shadow-sm"
+                >
+                  <div className="bg-primary/10 text-primary rounded-full w-10 h-10 flex items-center justify-center mb-4">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-medium mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </motion.div>
+        </section>
+        
+        {/* CTA Section */}
+        <section className="py-20 px-6 md:px-10 lg:px-20 max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-primary/5 border border-primary/10 rounded-xl p-8 text-center"
+          >
+            <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+              Start by exploring the sample dataset or import your own data to see how our matching algorithm can help optimize your course scheduling.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg">
+                <Link to="/matcher">
+                  Run Course Matcher
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/courses">
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  View Courses
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        </section>
       </main>
     </div>
   );
 };
+
+// Feature data
+const features = [
+  {
+    title: "Preference-Based Matching",
+    description: "Match students to courses based on their preferences while respecting capacity constraints and scheduling requirements.",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    title: "Constraint Satisfaction",
+    description: "Handle complex constraints including room capacity, lecturer availability, and period restrictions.",
+    icon: <CheckCircle2 className="h-5 w-5" />,
+  },
+  {
+    title: "Data Validation",
+    description: "Validate your dataset to ensure consistency and identify potential issues before running the matching algorithm.",
+    icon: <FileJson className="h-5 w-5" />,
+  },
+];
 
 export default Index;

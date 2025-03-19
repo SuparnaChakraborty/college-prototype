@@ -19,10 +19,7 @@ export function prepareDatasetForExport(
     rooms,
     courses,
     requests,
-    analysis: {
-      ...analysis,
-      validation
-    }
+    analysis
   };
 }
 
