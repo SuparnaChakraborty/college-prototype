@@ -1,69 +1,72 @@
-# Welcome to your Lovable project
 
-## Project info
+# Course Matcher System
 
-**URL**: https://lovable.dev/projects/50f8a67e-2020-411e-920b-87b636a815b4
+## Project Overview
+This application is designed to optimize course scheduling for educational institutions by matching students with courses based on their preferences while considering constraints like room capacity, lecturer availability, and period conflicts.
 
-## How can I edit this code?
+## Approach to the Task
 
-There are several ways of editing your application.
+### 1. Data Modeling
+The system is built around four primary data types:
+- **Lecturers**: Faculty members who teach courses, with constraints on teaching loads per period
+- **Rooms**: Physical spaces where courses are taught, with capacity constraints
+- **Courses**: Academic offerings that require specific lecturers and minimum room capacities
+- **Student Requests**: Student preferences for courses in specific periods, ranked by priority
 
-**Use Lovable**
+### 2. Validation System
+A comprehensive validation system checks for:
+- Course capacity constraints
+- Lecturer availability and teaching load limits
+- Room capacity and availability
+- Valid student course preferences
+- Period conflicts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/50f8a67e-2020-411e-920b-87b636a815b4) and start prompting.
+### 3. Matching Algorithm
+The matching algorithm follows these steps:
+1. Group student requests by period
+2. For each period:
+   - Process each student request in the order received
+   - Attempt to match students to their preferred courses in order of preference
+   - Check constraints (lecturer availability, room capacity)
+   - Assign students when all constraints are satisfied
+   - Track metrics like satisfaction rate and preference fulfillment
 
-Changes made via Lovable will be committed automatically to this repo.
+### 4. Analysis and Reporting
+The system provides:
+- Satisfaction metrics (overall satisfaction rate, first-choice fulfillment)
+- Period-by-period breakdown of assignments
+- Insights into bottlenecks (overloaded lecturers, room capacity issues)
+- Exportable data for further analysis
 
-**Use your preferred IDE**
+### 5. Data Export
+All data can be exported to JSON format for:
+- Integration with other systems
+- Backup and archiving
+- Advanced analysis in external tools
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Assumptions Made
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Preference Ordering**: Student preferences are strict and ordered (1st, 2nd, 3rd choice)
+2. **Fixed Periods**: The academic periods (A, B, C, etc.) are predetermined and fixed
+3. **Request Processing**: Requests are processed in the order received (first-come, first-served)
+4. **Single Course Per Period**: Students take only one course per period
+5. **Course Uniqueness**: Each course has a unique ID and is taught by exactly one lecturer
+6. **No Course Sectioning**: Courses are not split into multiple sections with different lecturers
+7. **Static Room Assignment**: Each course is assigned to one room for its entire duration
+8. **Lecturer Availability**: Lecturers have predefined periods when they're available to teach
+9. **No Time Preference**: Within a period, there's no preference for specific time slots
+10. **Batch Processing**: All matching is done in a single batch, not incrementally over time
 
-Follow these steps:
+## Technical Implementation
+- Built with React, TypeScript, and Tailwind CSS
+- Modular architecture with separation of data, validation, and UI concerns
+- Responsive design for use on various devices
+- State management via React's built-in hooks
+- Data visualization for analytics
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/50f8a67e-2020-411e-920b-87b636a815b4) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Future Enhancements
+- Advanced matching algorithms (weighted preferences, global optimization)
+- Support for course sections and multiple lecturers per course
+- Interactive editing of constraints and real-time results
+- Integration with existing student information systems
+- Support for importing data from various formats (CSV, Excel)
