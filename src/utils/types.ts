@@ -36,3 +36,22 @@ export interface MatchResult {
   period: string;
   satisfied: boolean;
 }
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+export interface DatasetAnalysis {
+  insights: string[];
+  statistics: Record<string, any>;
+  validation: ValidationResult;
+}
+
+export interface DatasetExport {
+  lecturers: Lecturer[];
+  rooms: Room[];
+  courses: Course[];
+  requests: StudentRequest[];
+  analysis: DatasetAnalysis;
+}

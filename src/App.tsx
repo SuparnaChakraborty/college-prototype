@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import Requests from "./pages/Requests";
 import Matcher from "./pages/Matcher";
+import DataValidation from "./pages/DataValidation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/courses" element={<Courses />} />
           <Route path="/requests" element={<Requests />} />
           <Route path="/matcher" element={<Matcher />} />
+          <Route path="/data-validation" element={<DataValidation />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface DataGridProps<T> {
@@ -20,7 +20,7 @@ function DataGrid<T>({
   columns = 3,
   gap = 6
 }: DataGridProps<T>) {
-  const container = {
+  const container: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -30,7 +30,7 @@ function DataGrid<T>({
     }
   };
   
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
@@ -60,13 +60,13 @@ function DataGrid<T>({
         className
       )}
     >
-      {data.map((item, index) => (
+      {data.map((dataItem, index) => (
         <motion.div 
           key={index} 
           variants={item} 
           className={itemClassName}
         >
-          {renderItem(item, index)}
+          {renderItem(dataItem, index)}
         </motion.div>
       ))}
     </motion.div>
