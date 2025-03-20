@@ -1,4 +1,4 @@
- **Course Matcher System**  
+## **Course Matcher System**  
 
 ## **Project Overview**  
 This application helps educational institutions streamline course scheduling by matching students with their preferred courses while considering constraints like room capacity, lecturer availability, and period conflicts.  
